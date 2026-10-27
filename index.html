@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Cyber Tetris — Неоновый Аркадный Тетрис</title>
+  <meta name="description" content="Современная веб-версия легендарной игры Тетрис с неоновой киберпанк графикой, звуковыми эффектами, системой SRS и адаптивным управлением.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800;900&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-wrapper">
+    <!-- Header -->
+    <header class="game-header">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M4 4h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4zm-6 6h4v4h-4z"/>
+          </svg>
+        </div>
+        <h1 class="logo-text">CYBER TETRIS</h1>
+      </div>
+
+      <div class="header-actions">
+        <!-- SFX Toggle -->
+        <button id="btn-toggle-sfx" class="icon-btn active" title="Вкл/Выкл звуки" aria-label="Звуки">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+          </svg>
+        </button>
+
+        <!-- Music Toggle -->
+        <button id="btn-toggle-music" class="icon-btn" title="Фоновая музыка Synthwave" aria-label="Музыка">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+          </svg>
+        </button>
+
+        <!-- Pause Button -->
+        <button id="btn-toggle-pause" class="icon-btn" title="Пауза (P / Esc)" aria-label="Пауза">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+          </svg>
+        </button>
+
+        <!-- Help Button -->
+        <button id="btn-help" class="icon-btn" title="Управление и правила" aria-label="Помощь">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Game Board & Panels -->
+    <main class="game-container">
+      <!-- Left Panel: Hold & Level/Lines -->
+      <aside class="side-panel left-panel">
+        <section class="panel-card" aria-label="Удержание фигуры">
+          <span class="panel-title">Удержание [C]</span>
+          <canvas id="hold-canvas" class="preview-canvas" width="120" height="90"></canvas>
+        </section>
+
+        <section class="panel-card" aria-label="Уровень">
+          <span class="panel-title">Уровень</span>
+          <div id="level-value" class="digital-value highlight-cyan">1</div>
+        </section>
+
+        <section class="panel-card" aria-label="Линии">
+          <span class="panel-title">Линии</span>
+          <div id="lines-value" class="digital-value highlight-purple">0</div>
+        </section>
+      </aside>
+
+      <!-- Center Board -->
+      <section class="board-stage">
+        <div id="canvas-wrapper" class="canvas-wrapper">
+          <canvas id="tetris-canvas" width="300" height="600"></canvas>
+
+          <!-- Interactive Modal Overlay (Pause / Game Over) -->
+          <div id="board-overlay" class="board-overlay">
+            <h2 id="overlay-title" class="overlay-title">CYBER TETRIS</h2>
+            <p id="overlay-sub" class="overlay-subtitle">Готовы к игре?</p>
+
+            <div id="overlay-score-box" class="overlay-score-box" style="display: none;">
+              <span class="overlay-score-label">Итоговый счет</span>
+              <span id="overlay-score-value" class="digital-value highlight-yellow">0</span>
+            </div>
+
+            <button id="overlay-btn" class="btn-primary">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+              СТАРТ
+            </button>
+          </div>
+        </div>
+
+        <!-- Mobile Controls (Displayed on touch devices) -->
+        <div class="mobile-controls">
+          <div class="touch-dpad">
+            <div></div>
+            <button id="touch-rotate-cw" class="touch-btn" aria-label="Поворот">
+              <svg viewBox="0 0 24 24"><path d="M7.11 8.53L5.7 7.11C4.8 8.27 4.24 9.61 4.07 11h2.02c.14-.87.51-1.72 1.02-2.47zM6.09 13H4.07c.17 1.39.72 2.73 1.62 3.89l1.41-1.42c-.52-.75-.89-1.6-1.01-2.47zm1.01 5.32c1.16.9 2.51 1.44 3.9 1.61V17.9c-.87-.15-1.71-.53-2.46-1.05l-1.44 1.47zM13 4.07V1L8.45 5.55 13 10V6.09c3.37 0 6.1 2.73 6.1 6.1 0 1.69-.7 3.22-1.82 4.31l1.43 1.43C20.31 16.27 21.1 14.28 21.1 12.19 21.1 7.71 17.48 4.07 13 4.07z"/></svg>
+            </button>
+            <div></div>
+
+            <button id="touch-left" class="touch-btn" aria-label="Влево">
+              <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+            </button>
+            <button id="touch-down" class="touch-btn" aria-label="Вниз">
+              <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+            </button>
+            <button id="touch-right" class="touch-btn" aria-label="Вправо">
+              <svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+            </button>
+          </div>
+
+          <div class="touch-actions">
+            <button id="touch-hold" class="touch-btn btn-hold" title="Удержание" aria-label="Hold">
+              <svg viewBox="0 0 24 24"><path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"/></svg>
+            </button>
+            <button id="touch-rotate-ccw" class="touch-btn" title="Поворот влево" aria-label="Поворот против часовой">
+              <svg viewBox="0 0 24 24"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>
+            </button>
+            <button id="touch-hard-drop" class="touch-btn btn-hard-drop" title="Быстрый сброс" aria-label="Сброс">
+              <svg viewBox="0 0 24 24"><path d="M11 4h2v8h-2zm-5 10h12l-6 6z"/></svg>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Panel: Next Queue & Scores -->
+      <aside class="side-panel right-panel">
+        <section class="panel-card" aria-label="Следующие фигуры">
+          <span class="panel-title">Следующие</span>
+          <div class="next-queue">
+            <canvas id="next-canvas-1" class="preview-canvas" width="110" height="75"></canvas>
+            <canvas id="next-canvas-2" class="preview-canvas" width="110" height="75"></canvas>
+            <canvas id="next-canvas-3" class="preview-canvas" width="110" height="75"></canvas>
+          </div>
+        </section>
+
+        <section class="panel-card" aria-label="Счет">
+          <span class="panel-title">Счет</span>
+          <div id="score-value" class="digital-value highlight-yellow">0</div>
+        </section>
+
+        <section class="panel-card" aria-label="Рекорд">
+          <span class="panel-title">Рекорд</span>
+          <div id="high-score-value" class="digital-value">0</div>
+        </section>
+
+        <section class="panel-card controls-card" aria-label="Управление">
+          <span class="panel-title">Управление</span>
+          <div class="control-item">
+            <span>Влево / Вправо</span>
+            <span class="control-key">← → / A D</span>
+          </div>
+          <div class="control-item">
+            <span>Поворот по ч.с.</span>
+            <span class="control-key">↑ / W</span>
+          </div>
+          <div class="control-item">
+            <span>Поворот против ч.с.</span>
+            <span class="control-key">Z</span>
+          </div>
+          <div class="control-item">
+            <span>Мягкий спуск</span>
+            <span class="control-key">↓ / S</span>
+          </div>
+          <div class="control-item">
+            <span>Мгновенный сброс</span>
+            <span class="control-key">Space</span>
+          </div>
+          <div class="control-item">
+            <span>Удержание (Hold)</span>
+            <span class="control-key">C / Shift</span>
+          </div>
+          <div class="control-item">
+            <span>Пауза / Рестарт</span>
+            <span class="control-key">P / R</span>
+          </div>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <!-- Help & Rules Modal -->
+  <div id="help-modal" class="modal-backdrop">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>КАК ИГРАТЬ</h3>
+        <button id="close-help-btn" class="close-btn" aria-label="Закрыть">&times;</button>
+      </div>
+      <div style="font-size: 0.9rem; line-height: 1.6; color: var(--text-muted); display: flex; flex-direction: column; gap: 12px;">
+        <p><strong style="color: var(--accent-cyan);">Цель игры:</strong> вращайте и укладывайте падающие фигуры (тетромино), собирая горизонтальные линии без пробелов. Заполненные линии исчезают, принося очки!</p>
+        <p><strong style="color: var(--accent-purple);">Система очков:</strong>
+          <br>• 1 линия: 100 × Уровень
+          <br>• 2 линии: 300 × Уровень
+          <br>• 3 линии: 500 × Уровень
+          <br>• 4 линии (TETRIS!): 800 × Уровень
+          <br>• Дополнительные комбо-бонусы за последовательные очистки!
+        </p>
+        <p><strong style="color: var(--accent-yellow);">Управление на смартфонах:</strong>
+          <br>• Свайп влево/вправо — перемещение
+          <br>• Свайп вниз — ускорение падения
+          <br>• Свайп вверх или двойной тап — мгновенный сброс
+          <br>• Тап по экрану — поворот фигуры
+          <br>• Или используйте сенсорные кнопки внизу экрана!
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script src="audio.js"></script>
+  <script src="tetris.js"></script>
+</body>
+</html>
